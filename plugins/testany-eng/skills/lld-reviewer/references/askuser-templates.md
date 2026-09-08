@@ -1,105 +1,51 @@
-# AskUserQuestion 模板
+# LLD 评审澄清模板
 
-本文档定义 lld-reviewer 审查过程中需要向用户确认的问题模板。
-
----
+先读取用户已给资料和可取得引用，仅询问会改变判断的未知事实。问题可以直接用自然语言，不依赖名为 `AskUserQuestion` 的工具；已有明确事实不重新让用户选择。遵守 `../../../references/review-boundaries.md`，一次只暂停依赖该答案的结论。
 
 ## 基线文档确认
 
-**触发时机**：Phase 0 - 读取 PRD/HLD/Contract
+**触发**：无法确认受影响行为的有效依据，而不是缺某个固定文件名。
 
-```yaml
-question: "请提供 LLD 的上游基线文档路径"
-header: "基线文档"
-multiSelect: false
-options:
-  - label: "从 LLD 中读取引用路径"
-    description: "LLD 已标注 PRD/HLD/Contract 路径，直接读取"
-  - label: "手动提供路径"
-    description: "请在下方提供：PRD 路径、HLD 路径、API Contract 路径"
-  - label: "部分文档缺失"
-    description: "说明哪些文档缺失（缺失将导致 P0）"
-```
+> 我已读到 {现有说明/ADR/契约}，但尚不能确认 {具体旧行为或边界} 的批准来源。是否有当时的决定或对应记录？这只影响 {结论}，{独立部分} 可以继续评审。
 
-**处理路径**：
-| 情况 | 严重度 | 处理 |
-|------|--------|------|
-| 所有文档存在且可访问 | — | 继续审查 |
-| LLD 未标注路径，但用户可提供 | P1 | 继续审查，记录文档缺陷 |
-| PRD/HLD/Contract 任一缺失 | P0 | 停止审查 |
-
----
+| 情况 | 处理 |
+|------|------|
+| 正式 LLD 及完整引用可读 | 执行正式四 Gate 与模块追溯 |
+| 有限修复有相关批准 ADR/用户决定，没有全套文档 | 用已有依据继续 `bounded_change`，不要求补写全套 |
+| 引用格式不完整，但原批准可核实 | 补最小引用；不凭格式判 P0/P1 |
+| 正式交付要求的 Manifest/必要资料未提供 | 不能签全量证书，记录最小缺口并继续可独立检查部分 |
+| 关键批准本身不明或相互冲突 | Evidence gap / Scope decision，不把历史 reviewer comment 自封为批准 |
 
 ## Guardrails 确认
 
-**触发时机**：Phase 0 - 确认 Guardrails 是否存在
+**触发**：现有资料无法确认某条适用项目约束。
 
-```yaml
-question: "项目是否有 Guardrails（工程约束）文档？"
-header: "Guardrails"
-multiSelect: false
-options:
-  - label: "有，路径是..."
-    description: "提供 Guardrails 文件路径"
-  - label: "没有 Guardrails"
-    description: "跳过 Guardrails 检查"
-  - label: "不确定"
-    description: "需要进一步确认"
-```
+> 这次 {具体变更} 是否已有项目级的 {具体约束}？目前能读到的是 {记录}，缺少的是 {事实}。
 
----
+不要对每个修复都先问是否新建 Guardrails。先执行既有 trigger check；仅治理建议不阻断，真正的跨模块新规则需核对有效工程权限，不能靠评审意见自动扩大本轮。
 
-## Guardrails Trigger 澄清
+## Manifest / N/A 澄清
 
-**触发时机**：Phase 0 - 无法判断这次评审是否已经命中项目级约束缺口
+**触发**：正式模式的 Excluded 理由与实际设计冲突，或有限修复漏述受影响链路。
 
-```yaml
-question: "这次 LLD 评审发现的问题，是否会改变项目里多个模块都要遵守的默认规则？"
-header: "Guardrails Trigger"
-multiSelect: false
-options:
-  - label: "是，会改变项目默认规则"
-    description: "应优先判断是否需要更新 Guardrails"
-  - label: "否，只影响当前 LLD"
-    description: "通常无需触发 Guardrails"
-  - label: "不确定，需要结合现有 Guardrails 一起判断"
-    description: "先读取现有 Guardrails 与批准基线再决定"
-```
+> {模块/链路} 在 {证据} 中受到影响，但说明将其列为不涉及。请确认这是沿用既有 {设计引用}，还是本次还需修改 {具体部分}？
 
----
+不要把“补表”当增加模块的授权。有限模式沿用既有实现且有依据时，无需填写全系统 N/A 清单。
 
-## N/A 理由澄清
+## 设计边界决定
 
-**触发时机**：Gate 1 - Manifest 中模块标记为 Excluded 但理由不清
+**触发**：修复真的改变职责、授权主体、依赖或失败语义；普通实现细节不触发。
 
-```yaml
-question: "请澄清以下模块标记为 N/A 的理由"
-header: "N/A 理由"
-multiSelect: false
-options:
-  - label: "补充说明理由"
-    description: "在下方说明为什么不需要该模块"
-  - label: "改为 Included"
-    description: "该模块实际上需要，LLD 需要补充"
-  - label: "确认不需要"
-    description: "确实不需要，理由是..."
-```
+先给出可判断的事实，再问有权 Owner：
 
----
+> 旧边界是 {谁做什么/失败如何处理}；方案会变为 {新行为}，增加 {具体依赖、运行负担或产品影响}。边界内可选方案为 {选项及限制}，我的建议是 {建议及理由}。是否已有授权该架构增量的工程 Owner 决定？如涉及 {产品行为/权限对象/收费等}，需由产品 Owner 确认。
 
-## 设计决策澄清
+不能提供“这是预期设计，无需修改”选项让一个不明权限答复自动生效。需要明确批准的范围与权限来源，优先复用现有回复，不创建新的审批平台。
 
-**触发时机**：Gate 2/3/4 - 发现需要用户澄清的设计决策
+## 真实入口证据
 
-```yaml
-question: "以下设计决策需要澄清"
-header: "澄清"
-multiSelect: false
-options:
-  - label: "这是预期设计"
-    description: "设计符合预期，无需修改"
-  - label: "需要修改 LLD"
-    description: "LLD 需要修改以符合预期"
-  - label: "需要更多讨论"
-    description: "这个问题需要进一步讨论"
-```
+**触发**：测试证明解释器可执行，却未证明现有管理入口支持拟议输入。
+
+> 当前测试覆盖 {执行器层}，尚未覆盖 {生产管理 API/SDK} 是否支持 {输入}。请提供现有生产样本、接口依据或最小隔离验证；不需要因此操作现网。其余 {部分} 可以继续评审。
+
+若已有生产入口拒绝的明确证据，应直接报告可行性问题，不把已证实失败伪装成需要产品经理选择或部署后补配置。

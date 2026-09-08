@@ -13,7 +13,7 @@ python3 plugins/testany-eng/skills/code-reviewer/tests/make_review_fixture.py CR
 ```
 
 导出命令创建临时目录，内含 `request.md`、`binding.json`、真实两/三次 commit 的
-`repository/` 和剔除 tests 的 `plugin/skills/code-reviewer/` 快照，以及其使用的两份
+`repository/` 和剔除 tests 的 `plugin/skills/code-reviewer/` 快照，以及其使用的三份
 `plugin/references/` 共享 reference。只在该临时 Git 仓库 commit，
 不会提交工作仓库，不联网。已有非空输出目录会被拒绝。精确 SHA/tree 随材料提供；
 配对 fixed 输入保留相同的 r1 commit，便于核对上一轮 Candidate。
@@ -42,3 +42,5 @@ python3 plugins/testany-eng/skills/code-reviewer/tests/make_review_fixture.py CR
 
 仅跑自动测试能证明 fixture 的可执行反例和修复对照成立，不能证明 reviewer 漏报率
 已经下降。未执行盲测或 paired delta 时，相关维度应写“未评估”，不要编造分数。
+
+维护路由/批准来源规则时，还执行 `../../../tests/review-boundaries/evaluation.md` 的有限设计与授权对照案例。两套案例互补：文档路由判断不代替这里的真实 helper 反例；此处代码样本也不证明所有架构决定均正确。

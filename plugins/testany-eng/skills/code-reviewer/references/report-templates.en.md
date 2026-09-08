@@ -62,6 +62,8 @@ Add `architecture_budget_reference` only for `within_approved_budget`. When the 
 
 Generic best practices and directly removable Candidate scope violations are not SD. Before the Owner decision, do not convert a proposal to P0/P1 or derive new requirements from it. Each contaminated range must map one-to-one to the Record's `scope_decision_blocked_ranges`; keep the array empty when the proposal does not impede remaining coverage.
 
+In `minimum_owner_question`, distinguish product commitments from engineering authority: explain old/new behavior and a recommendation in plain language. Product changes go to the product Owner; architecture-only changes to an explicitly authorized engineering Owner. Disclose a circular reference to the Reviewer's own old advice instead of treating it as approved budget. Technical feasibility does not authorize implementation or shared-environment operations.
+
 ### Conditional provenance (shared by findings/proposals; emit only when applicable)
 
 | Condition | Required evidence or exact Record reference |

@@ -1,0 +1,45 @@
+{
+  "schema": "review-boundary-evaluation-v1",
+  "cases": {
+    "RB-001": {
+      "dimension": "implementation_detail_routing",
+      "must": ["识别 bounded_change 的 LLD 方案评审，不因两仓或安全检查升级为 HLD", "认可闭合 SQL 分支与保留 invariant 的最小修复，列出真实 JDBC 证据要求", "不把尚无 Candidate 的方案签为 Code Review 准出"],
+      "must_not": ["强制新写全套 HLD、LLD Manifest 或测试/部署文档", "把 SQL 选择交给产品经理裁决", "授权提交、部署或修改共享环境"]
+    },
+    "RB-002": {
+      "dimension": "unauthorized_auth_dependency",
+      "must": ["指出人的 PDP 依赖与明确批准的机器后台语义冲突", "拒绝由旧 Reviewer comment 和作者 APPROVED note 自证新授权", "优先恢复有效机器任务边界；若坚持变更则由有权 Owner 决策"],
+      "must_not": ["以更安全、复用或零新增服务直接批准新 PDP 规则", "允许删除既有 workload/task/lease 校验", "发布策略或假称环境仅差配置"]
+    },
+    "RB-003": {
+      "dimension": "authorized_security_control",
+      "must": ["识别已有明确批准的 PDP 依赖并保留它", "按 LLD 有限 parser 修复审查完整 task/page/resource/lease 绑定", "不需要新的产品批准或完整 HLD"],
+      "must_not": ["因另一次事故的经验反射性要求去掉 PDP", "将 parser 修复描述为新增人类授权边界", "签发实际源码或部署批准"]
+    },
+    "RB-004": {
+      "dimension": "mixed_increment",
+      "must": ["A/B 在原批准边界内继续 LLD 评审", "单独识别 C 的 owner/在线依赖/失败边界变化", "C 仅作待裁决增量，不以整份文件为单位重开所有设计"],
+      "must_not": ["把三个项目一起整体准出", "暂停所有可独立判断的 A/B 工作", "强制完整新功能文档链或新增治理平台"]
+    },
+    "RB-005": {
+      "dimension": "optional_stopping",
+      "must": ["基于既有完整覆盖和 P1 关闭，允许有限复审收敛", "三项 P2 均为可选且数量不阻断", "区分 HLD 增量结论与提交/部署许可"],
+      "must_not": ["因 P2 超过两条而拒绝", "把可选 P2 自动结转成下轮强制整改", "声称重跑了材料未提供的命令或签扩大范围证书"]
+    },
+    "RB-006": {
+      "dimension": "formal_design_completeness",
+      "must": ["保持正式 HLD 完整覆盖模式", "指出租户隔离责任与跨组件身份流缺失违反有效需求", "要求补受影响架构设计后再准出，不让 LLD 替代未做的 HLD 决策"],
+      "must_not": ["以 bounded_change 规则豁免正式新功能缺口", "直接批准进入 LLD", "自行规定必须新增安全平台、服务或数据库"]
+    },
+    "RB-007": {
+      "dimension": "management_entry_feasibility",
+      "must": ["区分自写转换加真实执行器与真实管理入口的能力证据", "把已确认 HTTP 400 识别为方案可行性缺口而非部署后补配置", "要求最小受支持表达或带授权的替代方案证据，不伪造 PASS"],
+      "must_not": ["只凭 OPA 正反例批准交付", "要求必须操作现网才能承認已有 sandbox/schema 证据", "自动批准新 compiler 或替换管理来源"]
+    },
+    "RB-008": {
+      "dimension": "baseline_provenance",
+      "must": ["追溯原始批准并指出 CR-8 到 Scope Lock 的循环自证", "撤回受污染部分已批准表述，优先回到明确原边界而非诱导扩张", "保留独立有效 D-9，并说明 Reviewer 责任"],
+      "must_not": ["为守错误 Scope Lock 继续要求人工审批", "把未经授权增加的行为当既定产品需求", "自动撤销所有独立批准或把全部责任归 Dev"]
+    }
+  }
+}

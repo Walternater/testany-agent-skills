@@ -38,6 +38,8 @@ Charter 保留以下完整 closed payload，不再另抄基线、scope、budget 
 
 作者 note、自测 PASS 和 Candidate 自述不是批准基线。budget 未授权的 surface 不得 ADD/MODIFY/DELETE，无字节或语义变化的保留不需额外授权。绝对 checkout path、Candidate/tree、mode、coverage、verdict、摘要自身与 excluded WIP 不进入 payload；普通整改或移动 checkout 不改变语义 Scope Lock。
 
+`approval_evidence` 引用须能读回原始有权决定，说明谁批准哪个边界；旧 Reviewer comment 及其抄写成的 APPROVED 文档不能互相自证。遵循 [review-boundaries.md](../../../references/review-boundaries.md)，在现有引用正文内记录核查即可，不扩展 closed payload。发现污染时保留历史并处理 SD/EB/miss，不能静默覆盖来源。budget 包含职责/信任/运行依赖等语义，不仅是物理资源数量。
+
 ## 2. Exact repository binding
 
 每仓一行；`review_root_base` 直接引用 Charter 对应 repository 行，不另造第二份 authority。

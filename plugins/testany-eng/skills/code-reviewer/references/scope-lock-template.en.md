@@ -38,6 +38,8 @@ The script normalizes NFC/surrounding whitespace, sorts unordered sets, and reje
 
 Author notes, self-test PASS, and Candidate claims are not approved baselines. Unbudgeted surfaces cannot be ADD/MODIFY/DELETE; retaining a surface without byte or semantic change needs no additional authority. Absolute checkout paths, Candidate/tree, mode, coverage, verdict, the digest itself, and excluded WIP are outside the payload. Ordinary remediation or moving a checkout does not change the semantic Scope Lock.
 
+Read `approval_evidence` back to an original authorized decision: who approved which boundary. A prior Reviewer comment and an APPROVED document copied from it cannot authenticate each other. Follow [review-boundaries.md](../../../references/review-boundaries.md); record the check in existing references without extending the closed payload. Preserve history and apply SD/EB/miss handling to contaminated baselines, never silently replace them. Budget covers responsibility, trust and runtime dependency semantics, not just physical resource counts.
+
 ## 2. Exact repository binding
 
 One row per repository; reference `review_root_base` directly from its Charter repository row instead of creating another authority.

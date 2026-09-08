@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 RAW = HERE / "raw"
 SKILL = HERE.parent
 SHARED_REFERENCES = SKILL.parents[1] / "references"
-SHARED_REFERENCE_NAMES = ("language-policy.md", "subagent-result-contract.md")
+SHARED_REFERENCE_NAMES = ("language-policy.md", "subagent-result-contract.md", "review-boundaries.md")
 CASES = {
     "CRB-001": ("resource", "r1", None),
     "CRB-002": ("resource", "r2", None),

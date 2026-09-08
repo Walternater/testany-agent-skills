@@ -48,6 +48,15 @@
 
 ### 变更
 
+- **评审分层与授权边界纠偏（testany-eng 2.3.0）**：
+  - Guide/HLD/LLD/Code 共用 `review-boundaries.md`，按职责/信任/依赖边界、实现细节、契约和精确代码对象分流，不以跨仓数量或“技术方案”关键词选 HLD。
+  - HLD/LLD 增加 `formal_design` / `bounded_change` 入口；保留正式完整覆盖，有限修复不强制全链文档、Manifest 或全量证书，整改只审原 ID/delta/直接影响。
+  - 清除技术必要性标注、行业惯例与 Reviewer 旧 comment 循环自证授权的路径；区分技术结论、设计授权、执行许可，产品与工程决定分别交有权 Owner。
+  - HLD/LLD 主说明、检查库、双语模板和 command 统一 P2 非阻断；清除一律重跑全门、模板自动全绿和以签章代替批准的表述。
+  - Code Review 增补原始批准来源、零资源新增下的语义边界变化及真实管理入口/compiler 可表达性；既有 Scope Lock/snapshot/证据复用/有限漏审机械 policy 保持不变。
+  - 新增独立 raw 场景与分离的 grader，验证路由、授权、范围保持和停止行为；结构回归与模型行为评估分别记录，不冒充产品部署证明。
+  - 同步四个 command/agent metadata、README、marketplace 展示与单一 plugin 版本；未改其他 reviewer/writer 的准出规则。
+
 - **code-reviewer 八项高优先级改进（testany-eng 2.2.0）**：
   1. 核验生产入口、输入 provider/parser、真实 helper、替身边界与独立 oracle，不把真实 PG/Kind 或测试数量等同生产语义证据。
   2. 对触达关键校验成对验证合法接受/非法拒绝，检查正常状态变化、错误分类与拒绝副作用。
