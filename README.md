@@ -82,9 +82,11 @@ testany-agent-skills/
 
 `testany-eng` 默认跟随用户输入语言输出；用户显式指定语言时以用户指定为准；`TRACEABILITY-METADATA` 的字段名、枚举值与稳定 ID 保持英文。
 
+正式新功能按完整流程推进；存量系统有限修复按问题层级进入 HLD/LLD/Code，不强制重做全链文档。四个相关 skill 共用 [评审边界规则](plugins/testany-eng/references/review-boundaries.md)：技术合理性、设计授权与执行许可分离，技术理由不能自授权，旧 review comment 不能循环变成批准基线。P2 在 HLD/LLD/Code Review 中均不阻断。
+
 | 命令 | 描述 |
 |------|------|
-| `/testany-eng:guide` | 流程导航助手，扫描现有文档与准出状态，判断当前所处阶段并推荐下一步最合适的 skill |
+| `/testany-eng:guide` | 按正式设计、有限修复、实现对象及决策层级分流，核实批准来源，推荐最小下一步 |
 | `/testany-eng:brd-interviewer` | 业务需求访谈专家，通过选择题引导 stakeholder 输出结构化 BRD |
 | `/testany-eng:uc-interviewer` | 用户旅程访谈专家，在 BRD 和 PRD 之间建立对齐检查点，确认最新 BRD baseline，并产出带 metadata 的 USER_JOURNEY 基线 |
 | `/testany-eng:prd-writer` | PRD 写作技能，支持多种类型：新功能、第三方集成、重构、优化 |
@@ -96,12 +98,12 @@ testany-agent-skills/
 | `/testany-eng:guardrails-writer` | 工程规范编写助手，产出项目级 Guardrails |
 | `/testany-eng:guardrails-reviewer` | 工程规范审查门禁，检查覆盖性与可执行性 |
 | `/testany-eng:hld-writer` | HLD 写作技能，基于 PRD + API Contract 做技术决策 |
-| `/testany-eng:hld-reviewer` | HLD 审查专家，模拟 Design Review 会议，重点检测 PRD→HLD 漂移 |
+| `/testany-eng:hld-reviewer` | 正式 HLD / 架构增量评审，检查职责、信任、依赖及失败边界；技术建议不代替授权 |
 | `/testany-eng:test-strategy-writer` | 测试策略写作助手，基于 PRD/API/HLD 定义测试方法、分层、环境与门禁 |
 | `/testany-eng:test-strategy-reviewer` | 测试策略评审门禁，检查风险覆盖、分层、环境和入口/出口标准 |
 | `/testany-eng:lld-writer` | LLD 写作技能，将 HLD 和 Contract 细化为可实现的详细设计 |
-| `/testany-eng:lld-reviewer` | LLD 审查门禁，检查 HLD→LLD 漂移、完整性与实现风险 |
-| `/testany-eng:code-reviewer` | 冻结范围内的源码评审：核验生产语义、正反行为与整改整链；同 ID 漏审问责、有条件复用证据，P2 不阻断 |
+| `/testany-eng:lld-reviewer` | 正式 LLD / 已批准范围内有限工程设计评审；局部修复不强制全套 Manifest |
+| `/testany-eng:code-reviewer` | 可溯源批准范围内的源码评审：核验生产语义、管理入口及整改整链；保留有限漏审规则，拒绝循环自证授权 |
 | `/testany-eng:test-spec-writer` | 测试规格与测试用例包写作助手，输出完整 test case package |
 | `/testany-eng:test-reviewer` | 测试评审门禁，检查测试包覆盖、证据与残余风险 |
 | `/testany-eng:runbook-writer` | 运维手册（Runbook）编写协调器，基于 HLD/LLD 产出生产就绪的运维手册 |

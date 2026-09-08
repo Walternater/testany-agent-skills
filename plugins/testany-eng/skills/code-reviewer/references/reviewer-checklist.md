@@ -25,6 +25,8 @@
 
 ## A. Candidate 与生产路径
 
+- [ ] 新增/争议基线可回溯有权 Owner 的原始决定；不是 Reviewer comment → 作者 APPROVED note → Scope Lock 的循环自证
+- [ ] 当前职责/信任/授权主体/依赖失败语义与该有效基线一致；实现事实和测试不能替代授权来源
 - [ ] diff 边界与 Candidate/tree 精确绑定
 - [ ] review note 的声明能在实际生产入口中找到
 - [ ] 测试辅助路径未被误当作生产实现
@@ -55,6 +57,8 @@
 - [ ] retention/purge/legal-hold 只按批准语义实现
 
 不得因为一般安全偏好要求新增 key、Secret、HSM、ledger、RBAC role 或服务；这些属于 architecture surface。
+
+机器同步改成依赖用户 PDP、或反向移除已批准的 PDP，均属于授权语义变化；不得当成普通输入修正。核对实际主体、数据范围及旧/新允许条件，不从“机器任务”四个字推导放行或拒绝。
 
 ## D. 数据、事务与并发（仅触达时）
 
@@ -108,6 +112,7 @@ Contract 需要改变时，返回 scope decision；Code Reviewer 不代替 API R
 
 - [ ] 测试断言真实生产路径与外部可观察结果
 - [ ] 未 mock 被审 helper、未用本次输出生成独立批准预期、未只用字符串位置断言分支语义
+- [ ] 生产管理入口/SDK/compiler 的可表达性已区分于下游执行器可运行；没有用自写 compiler 的 PASS 遮蔽生产入口拒绝
 - [ ] negative/fault/concurrency case 与被保护 invariant 对应
 - [ ] skipped/conditional test 没有被误报为已验证
 - [ ] Candidate 的定向门禁与仓库标准命令一致
@@ -137,6 +142,7 @@ Contract 需要改变时，返回 scope decision；Code Reviewer 不代替 API R
 - [ ] 有精确代码证据和可复现 failure path
 - [ ] 影响达到相应严重度
 - [ ] 最小修复的 `architecture_surface_delta` 为 `none`，或严格落在 Scope Lock 已批准的 architecture budget 行内
+- [ ] “技术必要性”仅是理由，不替代新授权；更换信任/主体/运行依赖不能因零新增资源而标成无架构变化
 - [ ] 即使没有新表/服务，新增操作步骤、门禁/审批/配置和维护负担也对既定 invariant 必要；优先更小修复或缩小不实声明
 - [ ] Candidate 自行越界已作为完整 P1 scope-violation finding，最小修复仅删除/回退；真正的新 surface 要求保持 scope proposal
 - [ ] 它不是环境输入缺失、未来优化、文档美化或通用最佳实践

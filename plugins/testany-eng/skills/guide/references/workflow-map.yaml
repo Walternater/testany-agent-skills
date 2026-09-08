@@ -1,4 +1,4 @@
-version: 1
+version: 2
 notes:
   - "Guardrails is cross-cutting, not a default mainline gate."
   - "Prototype is optional and only shown when repo or user intent justifies it."
@@ -6,6 +6,37 @@ notes:
   - "Testany automation landing is optional and only shown when user intent or an approved Test Spec handoff justifies it."
   - "Commands in the automation lane come from the sibling testany-bot plugin and are valid canonical commands for cross-plugin routing."
   - "Use artifact-detection.md for detailed recognition and confidence rules."
+  - "Formal mainline prerequisites do not apply automatically to bounded repairs. Apply review_routing first."
+  - "Review approval, scope authorization and external execution permission are distinct; follow ../../../references/review-boundaries.md."
+
+# Declarative routing guidance, not an automatic hook or a new product gate.
+review_routing:
+  shared_reference: ../../../references/review-boundaries.md
+  first_classify: [user_objective, artifact_or_candidate, decision_layer, approved_scope_source]
+  modes: [formal_design, bounded_change]
+  rules:
+    - when: exact_implementation_review
+      command: /code-reviewer
+      constraints: "Use existing Candidate and policy rules; do not sign a code verdict for a plan."
+    - when: approved_boundary_implementation_plan
+      command: /lld-reviewer
+      mode: bounded_change
+      constraints: "Methods, SQL, transactions, retries or config; no full Manifest required just for a repair."
+    - when: responsibility_trust_dependency_or_failure_boundary_change
+      command: /hld-reviewer
+      mode: bounded_change
+      constraints: "Review only the architecture increment; verify scope authority separately from technical merit."
+    - when: contract_wire_identity_permission_or_compatibility_change
+      command: /api-reviewer
+      constraints: "Affected contract only; design/code comments do not approve new wire."
+    - when: formal_design_submission
+      constraints: "Use the corresponding HLD/LLD artifact route and full applicable coverage."
+    - when: mixed_request
+      constraints: "Split by decision layer; continue independent bounded parts; do not upgrade the whole request."
+  owner_decisions:
+    product: "Changed user/business behavior, permission population, support, charging or data disposition."
+    engineering: "Architecture changes only within explicitly delegated authority; ask user to identify owner if unknown."
+  non_triggers: [cross_repository_count, line_count, lead_dev_title, security_keyword, technical_plan_filename]
 
 states:
   - missing
@@ -233,7 +264,10 @@ nodes:
     command: /hld-reviewer
     requires:
       - HLD: exists
-      - PRD: preferred
+      - PRD: approved
+      - API_CONTRACT: preferred
+    requires_apply_to: formal_design
+    bounded_inputs: [architecture_change_request, relevant_approved_baseline_or_owner_decision]
     approves: HLD
     next: [test-strategy-writer]
 
@@ -280,6 +314,12 @@ nodes:
     command: /lld-reviewer
     requires:
       - LLD: exists
+      - PRD: approved
+      - HLD: approved
+      - API_CONTRACT: preferred
+      - GUARDRAILS: optional
+    requires_apply_to: formal_design
+    bounded_inputs: [engineering_repair_plan, relevant_approved_baseline_or_owner_decision]
     approves: LLD
     next: [test-spec-writer, code-reviewer]
 

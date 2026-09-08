@@ -1,5 +1,7 @@
 # PRD→HLD 漂移检测指南
 
+先按 `../../../references/review-boundaries.md` 选择 `formal_design` 或 `bounded_change`。本文的全量 PRD 覆盖与追溯格式适用于正式 HLD；有限增量使用相关批准依据和受影响链路，不补造整套文档。以下 P0/P1 示例都以有效基线、实际影响和本轮范围成立为前提，不能凭关键词或缺章节自动判级。
+
 ## 为什么漂移检测是最高优先级？
 
 在多 AI Agent 协同工作中，PRD 和 HLD 可能由：
@@ -14,22 +16,23 @@
 - 需求膨胀 → 过度工程，资源浪费
 - 需求曲解 → 做出来不是用户要的，推倒重来
 
-因此，**漂移检测必须作为第一道门，在所有其他审查之前完成**。
+因此先检查范围与语义。关键依据不明会阻止该部分准出，但不阻止其他可独立判断部分的审查。
 
 ---
 
 ## 四种漂移类型
 
-### 1. 需求遗漏（最严重）
+### 1. 需求遗漏
 
 **定义**：PRD 中明确定义的需求，在 HLD 中没有对应的设计。
 
 **检测方法**：
 ```
-For each requirement in PRD:
+For each approved in-scope requirement:
     Search HLD for corresponding design
     If not found:
-        Mark as "需求遗漏" (P0)
+        Distinguish missing evidence from an actual omitted behavior
+        Grade the proven omission by impact; do not infer P0 from a missing heading
 ```
 
 **常见表现**：
@@ -41,7 +44,7 @@ For each requirement in PRD:
 ```
 PRD: "系统应支持密码重置功能，用户可通过邮箱验证码重置密码"
 HLD: （未提及密码重置相关设计）
-→ 需求遗漏 (P0)
+→ 已证实范围内功能遗漏；按用户影响分级，不由缺章节自动判 P0。
 ```
 
 ---
@@ -52,40 +55,42 @@ HLD: （未提及密码重置相关设计）
 
 **检测方法**：
 ```
-For each feature/design in HLD:
-    Search PRD for corresponding requirement
-    If not found:
-        Check if marked as "技术必要性"
-        If not marked:
-            Mark as "需求膨胀" (P1)
+For each changed behavior/responsibility/dependency in the proposed design:
+    Trace scope to an original approved requirement/ADR/authorized owner decision
+    If within that scope and delegated engineering authority:
+        Evaluate technical necessity and the smallest sufficient design
+    Else if it clearly violates a known boundary and can be reverted:
+        Report the defect and request restoration of that boundary
+    Else:
+        Record DECISION_REQUIRED; evaluate feasibility without granting scope
+    Never accept a "technical necessity" annotation or a reviewer comment as approval
 ```
 
 **需要区分**：
 | 类型 | 是否允许 | 处理方式 |
 |------|----------|----------|
-| 无标注的额外功能 | ❌ 不允许 | P1 问题，要求删除或补 PRD |
-| 标注为「技术必要性」的设计 | ⚠️ 需审查 | 验证必要性是否符合合规标准 |
-| 纯技术实现细节 | ✅ 允许 | 属于 HLD 职责范围 |
+| 违反明确范围的额外功能 | ❌ 未批准 | 按影响列缺陷，优先退回既定边界，不诱导补范围 |
+| 明确提出的边界变更提案 | ⚠️ 待有权 Owner 决定 | 分开输出技术结论与 DECISION_REQUIRED |
+| 标注为「技术必要性」的设计 | ⚠️ 只是理由 | 仍须核查授权来源及更小方案 |
+| 授权范围内的纯实现细节 | ✅ 可由工程 Owner 决定 | 路由 LLD；不是 HLD 新职责 |
 
-**「技术必要性」合规标准**（需满足以下任一条件）：
+**技术必要性的论证维度**（没有任何一项可以替代授权）：
 
-| 标准 | 描述 | 有效示例 | 无效示例 |
-|------|------|----------|----------|
-| **实现依赖** | 无此设计则 PRD 功能无法实现 | 「认证功能需要 Token 刷新机制」| 「加个缓存更好」 |
-| **安全合规** | 安全/合规强制要求 | 「PCI DSS 要求加密存储」| 「建议加密」 |
-| **稳定性保障** | 无此设计系统不稳定 | 「异步处理需要 DLQ 防止消息丢失」| 「加 DLQ 更完善」 |
-| **行业惯例** | 公认的工程最佳实践 | 「API 需要版本号以支持演进」| 「加版本号更规范」 |
+| 维度 | 应核实的证据 | 不能自行推出的要求 |
+|------|--------------|--------------------|
+| 实现依赖 | 既定功能为何失败、边界内替代方案为何不足 | 登录功能不天然授权新会话模型或延长 TTL |
+| 安全合规 | 适用法规/批准安全目标、当前威胁和改变的权限主体 | “更安全”不天然授权让机器任务依赖用户 PDP |
+| 稳定性 | 已批准交付/恢复语义、当前持久化和重试能力 | 异步不天然要求 DLQ、新队列或重放平台 |
+| 行业惯例 | 对既定目标的实际作用及维护成本 | API 不天然要求新版本号/双轨协议 |
 
-**技术必要性标注格式要求**：
-- HLD 中必须明确标注「技术必要性：[具体原因]」
-- 必须说明与哪条 PRD 需求关联（如「为支持 REQ-001 的认证功能」）
-- 无标注或标注不符合上述标准的，视为「需求膨胀」(P1)
+论证可直接写在既有请求中：关联 invariant、真实失败、边界内最小替代、额外依赖/费用/运维、原始批准来源。增加注释或回补未经批准的 PRD 不能消除漂移。旧 Reviewer comment 及由它抄写的 APPROVED 文档不能循环充当新授权。
 
 **示例**：
 ```
 PRD: "实现用户登录功能"
 HLD: "设计用户登录、第三方 OAuth 登录、单点登录（SSO）"
-→ OAuth 和 SSO 是需求膨胀（除非有技术必要性说明）
+→ OAuth 和 SSO 超出已知范围；注释“技术必要性”不能批准它们。
+  明确既有登录即可满足需求时退回；若用户请求变更，再由有权 Owner 决策。
 ```
 
 ---
@@ -102,7 +107,7 @@ For each mapping (PRD requirement → HLD design):
         - Does HLD design match PRD acceptance criteria?
         - Are there implicit assumptions that differ?
     If misaligned:
-        Mark as "需求曲解" (P0)
+        Record the concrete behavior mismatch and grade its actual impact
 ```
 
 **常见表现**：
@@ -114,7 +119,7 @@ For each mapping (PRD requirement → HLD design):
 ```
 PRD: "系统应支持实时消息推送"
 HLD: "使用消息队列异步处理，延迟约 30 秒"
-→ 需求曲解：「实时」被理解为「30 秒延迟」(P0)
+→ 先核实“实时”的批准指标；若实际超出，按业务影响列语义缺陷，不能自己创造更严 SLO。
 ```
 
 ---
@@ -130,8 +135,9 @@ Compare PRD scope definition with HLD scope:
     - Out-of-scope items alignment
     - Constraints alignment
     - Assumptions alignment
-If any boundary changed:
-    Mark as "边界漂移" (P1)
+If a boundary changed:
+    Check original authorization and impact
+    Classify an actual violation, a scope decision, or missing evidence separately
 ```
 
 **常见表现**：
@@ -152,6 +158,8 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 
 ### Step 1: 检查 PRD 基线标注
 
+正式 HLD 需要完整批准需求基线；有限模式读取相关现有 Contract/HLD/ADR/用户决定即可。当前源码/现网只是事实，不自动成为获批标准。
+
 **检查项**：
 - [ ] HLD 是否标注了 PRD 基线版本？
 - [ ] PRD 文件路径是否正确？
@@ -159,39 +167,39 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 
 > **「最新批准基线」定义**：
 > - 经过正式评审通过的 PRD 版本，而非仍在迭代中的草稿
-> - **证据路径**：检查 PRD 元数据中的「状态」字段（如 Approved/Draft），或使用 AskUserQuestion 询问用户确认
+> - **证据路径**：检查版本、状态及原始批准记录；状态标签本身不是授权来源。不能确定时先本地定位，再向有权 Owner 提出具体问题。
 
-**处理路径（先问后判）**：
+**处理路径（先查证，必要时询问）**：
 
-| 情况 | 严重度 | 处理 |
+| 情况 | 分类 | 处理 |
 |------|--------|------|
-| HLD 未标注 PRD，但用户可提供 | **P1** | 继续审查，记录文档质量缺陷 |
-| 用户确认无 PRD | **P0** | 停止审查 |
-| PRD 为 Draft 或状态未知 | **P0** | 停止审查，要求 PRD 先通过评审 |
+| 正式 HLD 未标注来源，但已查到有效批准基线 | 覆盖/追溯问题 | 继续核查；按缺失的实际证据说明需补内容 |
+| 正式 HLD 缺必要批准需求，且无等价授权依据 | Evidence gap | EVIDENCE_BLOCKED，不签全量证书；其他独立部分可审 |
+| Draft 或状态未知，无法确认行为获批 | Evidence gap / Scope decision | 只暂停依赖它的准出，明确缺证或待决定内容 |
+| 有限修复无单独 PRD，但相关批准行为可核实 | 非缺陷 | 继续 bounded_change，不要求重写全套 PRD |
 
 **Step 1.1: 如果 HLD 未标注 PRD 来源**：
-1. **先使用 AskUserQuestion 询问用户 PRD 路径**
-2. 如果用户提供了 PRD 路径 → **P1**（文档质量缺陷），继续审查
-3. 如果用户确认「没有对应的 PRD」→ **P0 阻塞，停止审查**：
+1. 先查 HLD/ADR/索引中的引用，读取可取得的相关批准来源。
+2. 仍有影响结论的缺口时，询问具体依据；不从“没写路径”推断“没有批准”。
+3. 正式 HLD 确实缺必要需求依据时：
 ```
-发现 P0 问题：HLD 无 PRD 基础
-- 问题：经用户确认，本 HLD 无对应的 PRD 文档
-- 风险：无法验证需求一致性，HLD 缺乏需求依据
-- 建议：先完成 PRD 文档，再进行 HLD 设计
+Evidence gap：正式 HLD 的需求依据无法核实
+- 缺失：本次要承诺的用户/机器权限边界及其批准来源
+- 影响：无法对该边界的一致性签全量准出
+- 下一步：取得该具体批准依据；其他已有依据部分继续，不先发明权限方案
 ```
 
 **Step 1.2: 验证 PRD 状态**：
-- 检查 PRD 元数据中的「状态」字段（如无，使用 AskUserQuestion 询问用户）
-- **PRD 为 Approved** → 继续审查
-- **PRD 为 Draft 或状态未知** → **P0 阻塞，停止审查**：
+- 检查 PRD 状态、版本及原始批准记录，不能只信标签。
+- **可核实有效批准** → 继续一致性审查。
+- **Draft 或状态未知** → 依赖部分不能准出：
 ```
-发现 P0 问题：PRD 未通过评审
-- 问题：PRD 状态为 Draft（或状态未知），非批准基线
-- 风险：基于未定稿的 PRD 进行 HLD 审查，结论可能无效
-- 建议：PRD 先通过 prd-reviewer 评审，获得准出后再审查 HLD
+Evidence gap：目前无法确认该需求为批准基线
+- 可以分析方案技术可行性，但不能写 WITHIN_APPROVED_SCOPE 或签全量证书。
+- 如果该材料是主动提交的变更提案，另列 DECISION_REQUIRED，交有权 Owner 决定。
 ```
 
-> ⚠️ **禁止行为**：不得自行假设「HLD 没标注 PRD = 没有 PRD」，必须先询问用户
+> ⚠️ 不得假设「HLD 没标注 PRD = 没有 PRD」；也不得假设「文档标了 APPROVED = 有原始授权」。
 
 ### Step 2: 检查需求映射表
 
@@ -208,11 +216,11 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 | REQ-003 | 会话超时 | 3.3 会话管理 | 部分覆盖 |
 ```
 
-**如果缺少映射表**：
+**正式 HLD 缺少可用映射时**（已有等价映射不要求重排表格；有限模式不补全量表）：
 ```
-发现 P0 问题：HLD 缺少 PRD↔HLD 需求映射表
-- 问题：无法系统性验证需求覆盖情况
-- 建议：补充需求映射表，逐条对应 PRD 需求
+Evidence gap：无法验证完整需求覆盖
+- 请求补充缺少的需求→设计位置，而非为格式偏好制造 P0。
+- 若已证实某个范围内必要行为被遗漏，另列实际缺陷及影响。
 ```
 
 ### Step 3: 逐条验证需求覆盖
@@ -239,7 +247,7 @@ HLD: "设计批量导入接口，支持 Excel 上传"
    ```
 
 3. **标记问题**
-   - 未覆盖 → 需求遗漏 (P0)
+   - 未覆盖 → 区分实际遗漏与找不到证据；实际遗漏按影响分级
    - 部分覆盖 → 需进一步分析是否可接受
 
 ### Step 4: 反向检查需求膨胀
@@ -253,17 +261,16 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 
 2. **逐条在 PRD 中查找来源**
    ```
-   For each HLD_feature:
-       Search PRD for source requirement
-       If not found:
-           Check if marked as "技术必要性"
-           Record as potential drift
+   For each changed responsibility/feature/dependency/failure behavior:
+       Trace original authorized scope and engineering delegation
+       Distinguish implementation detail from boundary change
+       Never treat annotations, tests, or reviewer-generated approval as authorization
    ```
 
 3. **分类处理**
-   - 有 PRD 来源 → OK
-   - 标注技术必要性 → 验证必要性
-   - 无来源无标注 → 需求膨胀 (P1)
+   - 有有效来源且未改变该语义 → 继续技术验证
+   - 有技术必要性论证 → 仍须核实授权及最小方案
+   - 无来源 → 区分越界缺陷、待决策提案和证据缺口
 
 ### Step 5: 语义对齐验证
 
@@ -273,7 +280,8 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 |--------|----------|
 | 功能完整性 | HLD 设计是否完整实现 PRD 功能？ |
 | 性能对齐 | HLD 性能目标是否匹配 PRD 要求？ |
-| 边界对齐 | HLD 范围是否在 PRD 边界内？ |
+| 边界对齐 | 职责、权限主体、数据范围、常态依赖和失败语义是否获批？ |
+| 可发布性 | 生产管理入口是否支持拟议输入，还是仅直接调用执行器测试？ |
 | 验收可测 | HLD 设计能否验证 PRD 验收标准？ |
 
 ---
@@ -325,10 +333,11 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 | 1 | 需求膨胀 | 第三方登录未在 PRD 范围内 | - | HLD:3.5 |
 | 2 | 边界漂移 | 支持范围超出 PRD 定义 | PRD:1.4 | HLD:2.1 |
 
-### 门一结论（仅决定是否继续审查）
+### 门一结论（不得用局部完成冒充全量准出）
 
-- [ ] ✅ 无 P0，可继续审查（门一准入）
-- [ ] ❌ 存在 P0，阻塞（停止审查）
+- technical_verdict：[APPROVED / CHANGES_REQUIRED / EVIDENCE_BLOCKED]
+- scope_status：[WITHIN_APPROVED_SCOPE / DECISION_REQUIRED]
+- [已完成范围、仍依赖未决事实的部分、可继续的独立部分]
 
 ### 修复建议
 
@@ -342,7 +351,7 @@ HLD: "设计批量导入接口，支持 Excel 上传"
 
 3. **第三方登录**
    - 问题：HLD 设计超出 PRD 范围
-   - 建议：删除此设计，或补充 PRD 需求
+   - 建议：退回明确的本期边界；确需改变时交有权 Owner 决定，补写 PRD 本身不是授权
 ```
 
 ---
@@ -358,9 +367,8 @@ HLD: "接口响应时间 < 200ms，QPS > 1000"
 ```
 
 **处理**：
-- 这不是漂移，是 HLD 的正常职责
-- 但应验证具体化是否合理
-- 建议 HLD 标注「基于 PRD X.X 具体化」
+- 数值可作为工程测量目标提案，验证是否符合已授权成本/容量预算。
+- 若把它变成产品性能承诺或新增常态成本，需要相应 Owner 决定；不能靠“具体化”自批。
 
 ### 场景 2：PRD 有多种理解，HLD 选择了一种
 
@@ -384,9 +392,9 @@ HLD: 设计了完整的错误处理机制
 ```
 
 **处理**：
-- 这是合理的技术补充
-- HLD 应标注「技术必要性：PRD 未明确，但实现必需」
-- 不算需求膨胀
+- 边界内的错误映射、局部重试可属于已授权工程细节，转 LLD 验证。
+- 如“完整机制”意味着新 DLQ/恢复平台、改变失败是否可继续或新增用户授权依赖，仍是边界变化。
+- 必要性说明只解释理由；要核对原始授权，不能一概宣布“不算膨胀”。
 
 ### 场景 4：PRD 变更后 HLD 未同步
 
@@ -397,9 +405,8 @@ HLD: 基于 PRD v1，缺少 REQ-010
 ```
 
 **处理**：
-- 这是 P0 问题
-- HLD 必须基于最新 PRD 版本
-- 要求 HLD 同步更新
+- 先确认 PRD v2 已批准且适用于本轮冻结范围；后续未批准草稿不自动改写基线。
+- 若确实遗漏本轮有效需求，按影响列缺陷；新范围交 Owner 明确，不因“最新”重开所有已审范围。
 
 ---
 
@@ -426,8 +433,8 @@ HLD: 基于 PRD v1，缺少 REQ-010
 
 ## 核心原则
 
-1. **漂移检测优先于所有其他审查**
+1. **先确认本轮边界与批准来源，再审技术可行性**
 2. **没有证据不判定漂移，只标记待澄清**
-3. **需求遗漏是最严重的漂移类型**
-4. **合理的技术补充不是需求膨胀**
-5. **PRD 基线版本必须明确**
+3. **遗漏与曲解按真实影响分级，不靠类别或数量制造阻断**
+4. **合理性不等于授权；必要性、复用、安全和行业惯例都不构成豁免**
+5. **正式追溯要完整；有限增量不重造文档集，P2 不续轮**

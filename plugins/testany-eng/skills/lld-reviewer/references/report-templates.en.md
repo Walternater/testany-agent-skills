@@ -1,15 +1,36 @@
 # LLD review report and Approval Certificate Template
 
-This document provides the standard output template for LLD review.
+Use these templates with `../../../references/review-boundaries.md`. Select the mode first; keep useful coverage without creating extra documents or findings for the template. Every mandatory comment needs the effective baseline, actual failure, impact, smallest fix, and whether it changes a boundary. Separate defects, Evidence gaps, Scope decisions, and optional P2 suggestions. Fill applicability, counts, and pass states from actual evidence; example tables are not default-green results.
+
+## Bounded repair / remediation delta
+
+A direct response or an update to the existing review note is sufficient. Do not require a new file, full Manifest, or certificate.
+
+```markdown
+mode: bounded_change
+technical_verdict: APPROVED / CHANGES_REQUIRED / EVIDENCE_BLOCKED
+scope_status: WITHIN_APPROVED_SCOPE / DECISION_REQUIRED
+
+Scope: {proposal/delta, original finding IDs, acceptance semantics, direct effects; unreviewed parts}
+Effective basis: {approved requirements/Contract/HLD/ADR/user decision; original approver and scope for disputed boundaries}
+Results: {closure evidence; for defects, actual failure and smallest in-scope fix}
+Necessary Evidence gaps: {minimum missing facts or NONE; affected conclusions and independent work that can continue}
+Scope decisions: {old/new behavior, engineering/product impact, authorized Owner, in-scope alternatives and recommendation; or NONE}
+Optional P2: {never blocking and not automatically carried into remediation}
+Stop / next step: {only agreed P0/P1 and necessary gaps; stop when closed, without restarting historical scope}
+Authority: This conclusion covers only the stated delta; it does not authorize push, CI, policy/configuration publication, shared-data writes, or deployment.
+```
+
+Technical feasibility with an unresolved Scope decision is not design exit approval. A prior reviewer comment or its copied APPROVED note is not an original source of scope authority. Withdraw only the affected approval claim when a baseline is contaminated; preserve unrelated valid approvals.
 
 ---
 
 ## Review Report Template
 
-### Full Report (General)
+### Full Report (`formal_design` only)
 
 ```markdown
-#LLD Review Report
+# LLD Review Report
 
 ## Basic Information
 
@@ -22,7 +43,9 @@ This document provides the standard output template for LLD review.
 | **Guardrails** | {file path} / N/A |
 | **Review Time** | {YYYY-MM-DD HH:MM} |
 | **Review Round** | Round {N} |
-| **Review Conclusion** | 🟢 Pass / 🔴 Fail |
+| **technical_verdict** | APPROVED / CHANGES_REQUIRED / EVIDENCE_BLOCKED |
+| **scope_status** | WITHIN_APPROVED_SCOPE / DECISION_REQUIRED |
+| **Scope authority source** | {original authorized Owner record and scope, not this review as its own authority} |
 
 ---
 
@@ -32,7 +55,9 @@ This document provides the standard output template for LLD review.
 |------|------|------|------|
 | P0 (Block) | {n} | = 0 | ✅ Passed / ❌ Failed |
 | P1 (Severe) | {n} | = 0 | ✅ Pass / ❌ Fail |
-| P2 (recommended) | {n} | ≤ 2 | ✅ Passed / ❌ Failed |
+| P2 (suggestion) | {n} | No count threshold | Optional, non-blocking |
+
+List necessary Evidence gaps and Scope decisions separately. Do not count them as proven P0/P1 defects or omit them to issue a certificate.
 
 ---
 
@@ -73,11 +98,11 @@ This document provides the standard output template for LLD review.
 
 | Test items | Results | Evidence |
 |--------|------|------|
-| Introduction of new services | ✅ None / ❌ Yes | {Description of evidence} |
-| New interface introduced | ✅ None / ❌ Yes | {Description of evidence} |
-| New boundary introduction | ✅ None / ❌ Yes | {Description of evidence} |
+| New services/interfaces | None / Authorized / Decision needed | {original approval and scope, or proposed change} |
+| Authorization responsibility/principal or trust changes | None / Authorized / Decision needed | {old/new behavior and source} |
+| Standing dependency/control-flow/failure-boundary changes | None / Authorized / Decision needed | {include changes without new components} |
 
-**Gate 1 Conclusion**: ✅ Passed / ❌ P0 Blocked
+**Gate 1 Conclusion**: {Basis confirmed / Necessary evidence missing / Scope decision / Proven defect}; {dependent conclusions and independent work that can continue}.
 
 ---
 
@@ -95,12 +120,9 @@ This document provides the standard output template for LLD review.
 
 ### List of drift issues
 
-| # | Type | HLD Location | LLD Location | Description | Severity |
-|---|------|----------|----------|------|--------|
-| 1 | Missing | HLD:{location} | — | {description} | P0 |
-| 2 | Expansion | — | LLD:{location} | {description} | P1 |
-| 3 | Transformation | HLD:{Position} | LLD:{Position} | {Description} | P1 |
-| 4 | Downgrade | HLD:{location} | LLD:{location} | {description} | P1 |
+| Stable ID | Type | Effective basis | LLD location | Failure and impact | Classification |
+|-----------|------|-----------------|--------------|--------------------|----------------|
+| {ID} | {omission/inflation/distortion/degradation} | {original approval/requirement} | {location} | {facts} | {P0/P1 or Evidence gap / Scope decision} |
 
 ### Contract consistency check
 
@@ -138,8 +160,9 @@ This document provides the standard output template for LLD review.
 |--------|------|----------|------|
 | Key process pseudocode | ✅/⚠️/❌ | LLD:{location} | {question} |
 | Error handling completeness | ✅/⚠️/❌ | LLD:{location} | {issue} |
-| Concurrency/Transactions/Impotent | ✅/⚠️/❌ | LLD:{Location} | {Question} |
+| Concurrency / Transactions / Idempotency | ✅/⚠️/❌ | LLD:{Location} | {Question} |
 | Test strategy feasibility | ✅/⚠️/❌ | LLD:{location} | {question} |
+| Production management entry point / SDK capability | ✅/⚠️/❌ | {evidence for input, management interface, and evaluator} | {a custom compiler or direct evaluator call is not a substitute} |
 | Observational Design | ✅/⚠️/❌ | LLD:{Location} | {Question} |
 | Publishing Policy | ✅/⚠️/❌ | LLD:{Location} | {Question} |
 
@@ -148,6 +171,8 @@ This document provides the standard output template for LLD review.
 ---
 
 ## Question list summary
+
+Each suggested mandatory fix below must be the smallest fix within existing authority and state whether the boundary changes. If that is impossible, move it to Scope decisions instead of hiding a new design in P1. Severity follows actual impact, not missing document formats, checklist items, or lint levels.
 
 ### 🔴 P0 blocking problem (must be fixed)
 
@@ -169,9 +194,17 @@ This document provides the standard output template for LLD review.
 |---|------|----------|----------|----------|
 | 1 | Gate 4 | {Description} | LLD:{Location} | {Suggestion} |
 
+### Necessary Evidence gaps
+
+{Minimum missing facts, affected conclusions, and independent work that can continue; or NONE}
+
+### Scope decisions
+
+{Old boundary, new behavior, concrete impact, in-scope alternatives and recommendation, authorized engineering/product Owner; or NONE}
+
 ---
 
-## Release decision
+## Design review decision
 
 ### Exit threshold inspection
 
@@ -179,41 +212,41 @@ This document provides the standard output template for LLD review.
 |------|------|------|------|
 | P0 | = 0 | {n} | ✅/❌ |
 | P1 | = 0 | {n} | ✅/❌ |
-| P2 | ≤ 2 | {n} | ✅/❌ |
+| P2 | No count threshold | {n} | Non-blocking |
+| Necessary evidence / authority gaps | None unresolved for full design exit | {status} | {status} |
 
 ### in conclusion
 
-**🟢 Passed**: Meets the approval standards and can enter the code implementation stage.
+technical_verdict: {APPROVED / CHANGES_REQUIRED / EVIDENCE_BLOCKED}
+scope_status: {WITHIN_APPROVED_SCOPE / DECISION_REQUIRED}
 
-or
-
-**🔴 Failed**: There are {n} P0 issues and {n} P1 issues, which need to be repaired and reviewed.
+Formal design exit requires full coverage, no P0/P1 defects, and no necessary evidence or authority gaps. A technically sound proposal awaiting scope authority gets a technical opinion, not a conditional approval certificate.
 
 ---
 
 ## Next step
 
 ### If passed
-- Enter the code implementation stage
-- Keep this report as a design baseline
-- Refer to LLD design when implementing
+- End this design review; any implementation follows the user's existing authorization
+- Keep this report as review evidence, not self-proving original authority for added scope
+- P2 remains optional; do not automatically add it to another round or authorize push, CI, policy publication, shared-data writes, or deployment
 
 ### If not passed
 1. LLD author fixes the following issues:
 - {Question 1}
 - {Question 2}
 2. After the repair is completed, initiate a review (round +1)
-3. The review will re-execute the four-door inspection
+3. Retain original IDs, scope, and acceptance semantics. Review only the remediation delta, original blockers, and direct effects; explicitly complete unreviewed/evidence-gap parts without automatically restarting all four gates
 ```
 
 ---
 
 ## Approval Certificate Template
 
-### Output when passed
+### Only for formal design meeting all exit conditions
 
 ```markdown
-#✅ LLD approval certificate
+# LLD approval certificate
 
 ---
 
@@ -228,6 +261,9 @@ or
 | **Exact time** | {YYYY-MM-DD HH:MM} |
 | **Review Rounds** | {N} rounds in total |
 | **Review Conclusion** | 🟢 **Passed** |
+| **technical_verdict** | APPROVED |
+| **scope_status** | WITHIN_APPROVED_SCOPE |
+| **Scope authority source** | {original approval record, authorized Owner, and scope} |
 
 ---
 
@@ -235,20 +271,15 @@ or
 
 | Round | Date | P0 | P1 | P2 | Conclusion |
 |------|------|----|----|----| -----|
-| 1 | {YYYY-MM-DD} | 2 | 3 | 1 | 🔴 Fail |
-| 2 | {YYYY-MM-DD} | 0 | 1 | 2 | 🔴 Fail |
-| 3 | {YYYY-MM-DD} | 0 | 0 | 1 | 🟢 Pass |
+| {actual round} | {actual date} | {count} | {count} | {count} | {actual conclusion and record} |
 
 ---
 
 ## Consistency confirmation
 
-- ✅ HLD→LLD coverage 100%
-- ✅ No missing requirements (all covered by HLD design)
-- ✅ No unlabeled demand inflation
-- ✅ No need to deform
-- ✅ No quality downgrade
-- ✅ API Contract 100% consistent
+- HLD→LLD coverage: {reviewed/applicable total and evidence; incomplete coverage cannot receive a certificate}
+- Omission, unauthorized inflation, semantic drift, and quality degradation: {actual findings and evidence}
+- API Contract consistency: {actual coverage and evidence; technical reasons/annotations do not replace approval}
 
 ---
 
@@ -256,24 +287,25 @@ or
 
 | Threshold | Requirement | Actual | Status |
 |------|------|------|------|
-| P0 | = 0 | 0 | ✅ |
-| P1 | = 0 | 0 | ✅ |
-| P2 | ≤ 2 | {n} | ✅ |
+| P0 | = 0 | {actual count} | {conclusion} |
+| P1 | = 0 | {actual count} | {conclusion} |
+| P2 | No count threshold | {n} | Non-blocking |
+| Necessary evidence / authority gaps | None unresolved | {actual state and closure sources} | {conclusion} |
 
 ---
 
 ## Review coverage
 
-- ✅ **Gate 1**: Baseline and Manifest checks completed
-- ✅ **Gate 2**: Consistency and drift detection completed
-- ✅ **Gate 3**: Module integrity check completed
-- ✅ **Gate 4**: Feasibility and risk assessment completed
+- **Gate 1**: {actual baseline and Manifest result}
+- **Gate 2**: {actual consistency and drift result}
+- **Gate 3**: {actual module completeness result}
+- **Gate 4**: {actual feasibility and risk result}
 
 ---
 
 ## Legacy Suggestions (P2)
 
-The following issues do not block release and are recommended to be optimized during the implementation phase:
+The following suggestions do not block design exit and are not automatically included in implementation or the next remediation round. The author decides whether to adopt them:
 
 | # | Question | Suggestion |
 |---|------|------|
@@ -285,25 +317,23 @@ The following issues do not block release and are recommended to be optimized du
 
 This LLD has been fully reviewed by **lld-reviewer** and meets the approval standards.
 
-### ✅ You can enter the code implementation stage
+This certificate attests only to completion of this formal LLD review. It does not replace the scope Owner's approval or authorize implementation, push, CI, policy/configuration publication, shared-data writes, or deployment.
 
 ---
 
 **Reviewer**: lld-reviewer
 
-**Accurate signature**: `PASSED-{YYYYMMDD}-{First 6 digits of MD5 (LLD file name)}`
-
-Example: `PASSED-20250115-a3f2b1`
+**Review record**: {review time, reviewed version, and actual evidence location; do not manufacture an authority seal}
 ```
 
 ---
 
-## Blocking report template (Gate 1 P0)
+## Necessary basis / pending boundary decision
 
-When there is a P0 problem in Gate 1, the review is immediately stopped and a simplified report is output:
+When critical basis or authority is unresolved, pause only dependent conclusions and continue independently reviewable work. Missing files are not automatic P0 defects; proven defects are still classified by impact.
 
 ```markdown
-# LLD Audit Report - Gate 1 Blocked
+# LLD Review - Pending evidence / boundary decision
 
 ## Basic Information
 
@@ -311,27 +341,28 @@ When there is a P0 problem in Gate 1, the review is immediately stopped and a si
 |------|------|
 | **LLD Documentation** | {file path} |
 | **Review Time** | {YYYY-MM-DD HH:MM} |
-| **Review Conclusion** | 🔴 **Gate 1 Blocking** |
+| **technical_verdict** | {APPROVED / CHANGES_REQUIRED / EVIDENCE_BLOCKED} |
+| **scope_status** | {WITHIN_APPROVED_SCOPE / DECISION_REQUIRED} |
 
 ---
 
-## Gate 1 blocking reason
+## Specific paused conclusions
 
-| # | Problem | Severity | Description |
-|---|------|--------|------|
-| 1 | {Problem description} | P0 | {Detailed description} |
+| ID | Gap / decision | Dependent scope | Minimum evidence or authorized Owner options |
+|----|----------------|-----------------|----------------------------------------------|
+| {ID} | {Evidence gap / Scope decision} | {specific conclusion} | {details} |
 
 ---
 
 ## Next step
 
-1. Fix Gate 1 P0 problem
-2. Reinitiate LLD review
-3. Review will restart from Gate 1
+1. Supply the minimum necessary facts or corresponding boundary decision; do not require a new full set of upstream documents
+2. Continue / record independent review work: {results}
+3. Review only the affected delta and original gap next, without reopening unrelated valid conclusions
 
 ---
 
-**Note**: Gate 2/3/4 is not executed due to P0 blocking problem in Gate 1.
+**Coverage disclosure**: {what was actually reviewed, what was not, and why}; do not claim full design exit.
 ```
 
 ---
@@ -340,5 +371,5 @@ When there is a P0 problem in Gate 1, the review is immediately stopped and a si
 
 1. **Select Template**: Select the corresponding template based on the review results
 2. **Fill content**: Replace `{placeholder}` with actual content
-3. **Keep Format**: Strictly follow the table and chapter structure
+3. **Fit the task**: Preserve necessary decisions; bounded reviews may use concise prose rather than tables or a full certificate
 4. **Evidence Reference**: All questions must refer to specific locations (e.g. `LLD:3.2`, `HLD:4.1`)

@@ -131,6 +131,8 @@ options:
 
 ## Reviewer 额外要求
 
+`hld-reviewer` / `lld-reviewer` 已采用 [review-boundaries.md](review-boundaries.md) 的正式/有限变更入口及分类：本文件负责识别项目级规则缺口，不能因有限修复缺少整份 Guardrails 自动新建门禁。`require_guardrails_before_design` 在这两个 reviewer 中表示相关结论不可准出；具体区分证据缺口、授权待定与已证实缺陷，不自动将缺文档记成 P0，也不停止其他可独立判断的范围。writer 和其他 reviewer 的现有流程不在本次变更内。
+
 reviewer 不能只说“建议补 Guardrails”，必须明确：
 
 - 如果现在不补，为什么仍可继续通过审查

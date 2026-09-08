@@ -50,6 +50,25 @@ python3 plugins/testany-eng/scripts/trace_build_rtm.py --format json <PRD.md> <H
 
 ## 工作流程
 
+以下 DAG 是正式新功能流程。已有系统的有限修复先按实际决策层级分流，不从缺失的历史文档倒推一整轮重写。
+
+### 有限变更与评审边界
+
+`guide`、`hld-reviewer`、`lld-reviewer`、`code-reviewer` 共用 [review-boundaries.md](references/review-boundaries.md)。这是一份评审者行为规则，不是新增产品发布平台。
+
+| 实际对象 | 入口 | 边界 |
+|---|---|---|
+| 已批准职责内的 SQL、事务、重试、配置修复方案 | LLD `bounded_change` | 可用现有一页修复计划，不强制全套 Manifest/测试/Runbook |
+| 职责、信任、运行依赖或失败语义变化 | HLD `bounded_change` | 只审架构增量，设计授权独立确认 |
+| wire/身份/权限契约增量 | API Review | HLD/LLD/Code comment 不代替契约批准 |
+| 精确实现 Candidate | Code Review | 保留既有 Scope Lock、证据、delta 与有限漏审状态机 |
+
+混合请求按问题拆开；仓库数量、安全关键词和“技术方案”标题不决定层级。新增授权边界要回到原始 Owner 决定，不能用 Reviewer comment → 作者 APPROVED note → 新评审的循环自证。已授权工程细节可直接判断，产品行为/权限对象/收费/支持范围变化才交产品 Owner；外部写入、发布策略、部署仍需各自明确许可。
+
+HLD/LLD 正式模式保留完整覆盖；有限模式只给对应增量意见。P2 数量不阻断这两类设计评审及 Code Review，必要 gap 关闭即停止。其他 skill 的准出规则本轮未重写。
+
+### 正式新功能流程
+
 ```mermaid
 flowchart TD
     A[💡 想法] --> B[/brd-interviewer/]
@@ -134,10 +153,12 @@ flowchart TD
 | Guardrails 写完了，需要评审 | `/guardrails-reviewer` | 检查触发判定、事实标准、workflow hooks 与规则可执行性 |
 | 有 PRD + API Contract，要写技术方案 | `/hld-writer` | 基于 PRD + 契约撰写 HLD |
 | HLD 写完了，需要技术评审 | `/hld-reviewer` | 检测 PRD→HLD 漂移 |
+| 存量修复拟改变职责、信任、依赖或失败边界 | `/hld-reviewer` | 只评估架构增量，不自动授予变更权限 |
 | HLD 准出了，要定义测试方法和门禁 | `/test-strategy-writer` | 基于 PRD/API/HLD 定义测试策略 |
 | 测试策略写完了，需要评审 | `/test-strategy-reviewer` | 审查风险覆盖、分层与环境策略 |
 | HLD 准出了，要写详细设计 | `/lld-writer` | 将 HLD 细化为可实现的设计 |
 | LLD 写完了，需要设计评审 | `/lld-reviewer` | 检测 HLD→LLD 一致性 |
+| 存量修复只涉及既有职责内的方法、SQL、事务、重试 | `/lld-reviewer` | 有限工程设计评审；跨仓不自动升级 HLD |
 | 已有精确实现 Candidate，需要 Lead Dev 源码评审 | `/code-reviewer` | 冻结 Scope Lock 后检查实现正确性；不扩大需求/架构，不替代部署批准 |
 | LLD 准出了，要写完整测试包 | `/test-spec-writer` | 产出 test case package、追溯矩阵与执行说明 |
 | 测试包写完了，需要测试门禁评审 | `/test-reviewer` | 审查覆盖、证据与残余风险 |
@@ -151,6 +172,8 @@ flowchart TD
 > 说明：`/case-writing`、`/case`、`/pipeline`、`/trigger`、`/execution` 来自同仓库下的 `testany-bot` 插件，是 Test Spec 准出后的自动化落地分支。
 
 ### 决策树
+
+先应用上面的有限变更入口；下图用于正式产物链与实现 Candidate，不表示所有修复都必须补齐它。
 
 ```mermaid
 flowchart TD
@@ -450,9 +473,11 @@ flowchart TD
 - 漂移检测：遗漏、膨胀、变形、降级
 - 多角色视角：架构师、安全、SRE、业务方
 - 输出覆盖表 + 漂移报告
+- 支持正式设计和有限架构增量；核实原始授权，技术必要性不豁免边界
+- 技术结论与 scope_status 分列，P2 永不阻断；有待决定/缺证时不签准出证书
 
-**输入**：HLD 路径 + PRD 路径
-**输出**：审查报告 + 准出证书（通过时）
+**输入**：正式 HLD + PRD/Contract，或有限架构变更说明 + 相关批准基线
+**输出**：正式设计报告/证书，或仅对应有限增量的评审意见；不授予部署权限
 
 **示例**：
 ```
@@ -524,16 +549,17 @@ flowchart TD
 
 ### lld-reviewer
 
-**用途**：评审 LLD，检测 HLD→LLD 漂移，作为实现前的最后门禁
+**用途**：评审正式 LLD 或已有批准边界内的有限工程修复，检测 HLD→LLD 漂移与实现风险
 
 **特点**：
 - 四道门禁：基线与 Manifest → 一致性与漂移 → 模块完整性 → 可实现性与风险
-- 严格准出：P0=0, P1=0, P2≤2 才放行
-- Guardrails 最高优先级
+- 正式模式执行四道门；有限模式按受影响链路检查，不因缺全套 Manifest 强制重做文档
+- P0/P1 和必要证据/授权缺口关闭即停止，P2 不阻断
+- 按实际项目级规则影响触发 Guardrails，不为每个局部修复新增治理门禁
 - Contract 是事实源，不得重写
 
-**输入**：LLD 路径 + PRD 路径 + HLD 路径 + API Contract 路径 + Guardrails 路径（如有）
-**输出**：审查报告 + 准出证书（通过时）
+**输入**：正式 LLD 及上游基线，或有限修复说明及相关批准依据
+**输出**：正式设计报告/证书，或仅对应有限增量的评审意见；技术结论与授权分列
 
 **示例**：
 ```
@@ -548,10 +574,12 @@ flowchart TD
 
 **特点**：
 - 评审前冻结 base/Candidate/tree、批准基线、In/Out Scope 与 architecture budget
+- 新增/争议基线追溯原始有权决定；自己的旧 comment 不经授权不能变成架构预算
 - 首轮检查完整 Candidate diff；同一 Scope Lock 下，旧完整覆盖可信、两类 gap 为空且旧内容/直接影响范围可重建时，整改轮只检查 delta、原 blocking closure 和直接回归面
 - Candidate 自行加入且可删除/回退的 budget 外 surface 返回 `CHANGES_REQUIRED`；只有边界含糊或最小正确修复确需扩 scope 时才返回 `SCOPE_DECISION_REQUIRED`
 - P0/P1 必须有 frozen invariant、精确证据、复现路径、影响，以及不超出已批准 architecture budget 的最小修复
 - 核对实际生产入口/provider/parser、真实 helper 与独立 oracle；成对检查合法接受和非法拒绝，沿直接 caller/branch/target 与跨尝试恢复状态判断整改闭合
+- 核查管理 API/compiler 能否表达拟议配置；直接向执行器喂自写转换结果不证明生产管理链可用
 - 同 finding ID 仍披露原问题未修完、新回归、旧原因漏报的因果与 reviewer 责任；漏审后的独立复核必须改变失效的验证方法
 - P2 永不阻断或捆绑当轮整改；最小修复同时约束架构面与新增操作/门禁维护负担，源码、CI、环境结论分离
 - 使用一份可核验 Review Record，报告/子任务引用，不重复抄历史；只有内容、依赖、命令、工具、配置和基线核验一致才能复用 source/local 证据，新 Candidate 仍需新绑定与 verdict
@@ -629,6 +657,8 @@ flowchart TD
 ---
 
 ## 文档流转关系
+
+下表是正式产物流转；有限变更复用现有说明和相关批准依据，按前述分流执行，不要求补齐整表。
 
 | 上游文档 | Skill | 下游文档 |
 |----------|-------|----------|

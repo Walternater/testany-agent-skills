@@ -62,6 +62,8 @@ P2 是可选建议：未明确选择不进入整改、不结转 mandatory closur
 
 泛化最佳实践和可直接删除的 Candidate 越界不是 SD。未获决定前不把 proposal 转成 P0/P1，也不从 proposal 衍生新要求。每个 contaminated range 必须一一出现在 Record 的 `scope_decision_blocked_ranges`；不阻碍其余覆盖时保持空数组。
 
+`minimum_owner_question` 区分产品承诺与工程授权：用业务语言说明旧/新行为及建议，产品变化交产品 Owner，纯架构变化交有明确授权的工程 Owner。决策来源若只是 Reviewer 自己的旧意见，明确披露循环引用及该结论不具备授权，不能将其作为批准 budget。建议被认为技术可行也不授权实现或共享环境操作。
+
 ### Conditional provenance（finding / proposal 共用，仅适用时输出）
 
 | 条件 | 必需证据或 Record 精确引用 |

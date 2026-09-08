@@ -15,3 +15,5 @@ $ARGUMENTS
 
 本命令只做源码实现评审，不替代 API/HLD/LLD/Test/Runbook Review，也不授予
 push、merge、CI 触发或部署权限。
+
+批准基线须有原始授权来源；不能将 Reviewer 旧意见循环引用为设计授权。有限设计分流与职责/信任变化判定以 Skill 引用的共享 review-boundaries 为准。

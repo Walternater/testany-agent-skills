@@ -115,7 +115,7 @@ class CodeReviewerBehaviorCasesTests(unittest.TestCase):
             self.assertEqual(target_shared, bundle / "plugin" / "references")
             self.assertEqual(
                 {path.name for path in target_shared.iterdir()},
-                {"language-policy.md", "subagent-result-contract.md"},
+                {"language-policy.md", "subagent-result-contract.md", "review-boundaries.md"},
             )
             for name in EXPORT.SHARED_REFERENCE_NAMES:
                 self.assertTrue((source_shared / name).is_file())
